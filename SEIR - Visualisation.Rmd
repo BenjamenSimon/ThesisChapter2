@@ -1,0 +1,1019 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+title: "SEIR Chain Binomial Epidemic Inference"
+author: "Benjamen Simon"
+date: "September 2022"
+knit: (function(inputFile, encoding) { 
+          rmarkdown::render(
+            inputFile,
+            encoding = encoding, 
+            output_dir = "../Reports") 
+            })
+header-includes:
+  - \usepackage{amsmath}
+  - \usepackage{enumerate}
+  - \usepackage{bm}
+  - \usepackage[T1]{fontenc}
+---
+
+```{r setup, include=FALSE}
+
+# Rmarkdown settings
+knitr::opts_chunk$set(echo = FALSE, cache = TRUE, eval= TRUE, message = FALSE, cache.path = "Caches/", fig.path = "Figures/cbHomo/")
+
+# Default to non-scientific notation
+options(scipen=999)
+
+# Suppress summarise info
+options(dplyr.summarise.inform = FALSE)
+
+```
+
+```{r Packages}
+
+  ## Data manipulation
+  library(tidyverse)
+
+  ## Plotting
+  library(ggplot2)
+  library(ggcorrplot)
+  source("SEIRVisualisationFunctions.R")
+
+  ## MCMC Diagnostics
+  library(coda)
+
+  ## Epidemics
+  library(EpidemicR) # For simulating and making inference on GSE epidemics
+
+  ## Write up
+  library(xtable)
+
+```
+
+
+# Load in the epidemic
+
+The epidemic we have simulated has a modal number of infected individuals as roughly 25% of the population but is incomplete. We ran the inference in Julia.
+
+```{r Load epidemic}
+
+# Associated infection rate matrix
+  params <- c(0.25, 0.08, 0.22)
+  
+# Simulated states
+  # sim_states <- read.csv("Data/simulated_data.csv", header = F)
+  
+# Simulated events
+  # sim_events <- read.csv("Data/simulated_track.csv", header = F)
+  
+  
+# Simulated states
+  sim_states <- read.csv("Data/simulated_data_1000_agg_1.csv", header = F)
+  
+# Simulated events
+  sim_events <- read.csv("Data/simulated_track_1000_agg_1.csv", header = F)
+
+```
+
+
+# Inference: Parameters only
+
+```{r Load the results _1}
+
+# Load in the inference
+res_1 = read.csv("Inference/Set 1/params/res.csv")
+other_res_1 = read.csv("Inference/Set 1/params/other_res.csv")
+
+```
+
+```{r Summarise the results _1}
+
+## Summarise the results
+
+summary(res_1[-(1:5000), 1:3])
+
+summary(other_res_1[-(1:5000), c(3,5,6)])
+
+```
+
+```{r Plot the results _1}
+
+## Plot the results
+
+trace_plot_1 = gg_trace_plot(res_1, params, 10000, c(40000, 0.14, 40000, 0.025, 40000, 0.09), c(0.12, 0.4, 0.01, 0.15, 0.08, 0.3))
+
+hist_plot_1 = gg_hist_plot(res_1, params, 10000, c(0.17, 6, 0.04, 15, 0.12, 7), c(0.15, 0.45, 0.03, 0.15, 0.1, 0.33))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/params/trace.png", plot = trace_plot_1, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/params/hist.png", plot = hist_plot_1, width = 20, height = 8)
+
+```
+
+
+
+# Inference: Move SE events
+
+```{r Load the results _2}
+
+# Load in the inference
+res_2 = read.csv("Inference/Set 1/mSE/res.csv")
+other_res_2 = read.csv("Inference/Set 1/mSE/other_res.csv")
+aug_res_2 = read.csv("Inference/Set 1/mSE/aug_res.csv")
+
+```
+
+```{r Summarise the results _2}
+
+## Summarise the results
+
+summary(res_2[-(1:5000), 1:3])
+
+summary(other_res_2[-(1:5000), c(3,5,6)])
+
+summary(aug_res_2[-(1:5000), c(1,3,4)])
+
+```
+
+```{r Plot the results _2}
+
+## Plot the results
+
+trace_plot_2 = gg_trace_plot(res_2, params, 10000, c(40000, 0.14, 40000, 0.025, 40000, 0.09), c(0.12, 0.4, 0.01, 0.18, 0.08, 0.32))
+
+hist_plot_2 = gg_hist_plot(res_2, params, 10000, c(0.17, 6, 0.04, 11, 0.12, 7), c(0.15, 0.43, 0.03, 0.18, 0.1, 0.33))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/mSE/trace.png", plot = trace_plot_2, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/mSE/hist.png", plot = hist_plot_2, width = 20, height = 8)
+
+```
+
+
+
+
+
+# Inference: Move EI events
+
+```{r Load the results _3}
+
+# Load in the inference
+res_3 = read.csv("Inference/Set 1/mEI/res.csv")
+other_res_3 = read.csv("Inference/Set 1/mEI/other_res.csv")
+aug_res_3 = read.csv("Inference/Set 1/mEI/aug_res.csv")
+
+```
+
+```{r Summarise the results _3}
+
+## Summarise the results
+
+summary(res_3[-(1:5000), 1:3])
+
+summary(other_res_3[-(1:5000), c(3,5,6)])
+
+summary(aug_res_3[-(1:5000), c(5,7,8)])
+
+```
+
+```{r Plot the results _3}
+
+## Plot the results
+
+trace_plot_3 = gg_trace_plot(res_3, params, 10000, c(40000, 0.14, 40000, 0.025, 40000, 0.09), c(0.12, 0.45, 0.01, 0.165, 0.08, 0.35))
+
+hist_plot_3 = gg_hist_plot(res_3, params, 10000, c(0.17, 6, 0.04, 19, 0.12, 7), c(0.15, 0.46, 0.03, 0.14, 0.1, 0.36))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/mEI/trace.png", plot = trace_plot_3, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/mEI/hist.png", plot = hist_plot_3, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+
+# Inference: Add / Remove SE events
+
+```{r Load the results _4}
+
+# Load in the inference
+res_4 = read.csv("Inference/Set 1/arSE/res.csv")
+other_res_4 = read.csv("Inference/Set 1/arSE/other_res.csv")
+aug_res_4 = read.csv("Inference/Set 1/arSE/aug_res.csv")
+
+```
+
+```{r Summarise the results _4}
+
+## Summarise the results
+
+summary(res_4[-(1:5000), 1:3])
+
+summary(other_res_4[-(1:5000), c(3,5,6)])
+
+summary(aug_res_4[-(1:5000), c(13,15,16)])
+
+```
+
+```{r Plot the results _4}
+
+## Plot the results
+
+trace_plot_4 = gg_trace_plot(res_4, params, 10000, c(40000, 0.14, 40000, 0.01, 40000, 0.09), c(0.12, 0.42, 0, 0.18, 0.08, 0.32))
+
+hist_plot_4 = gg_hist_plot(res_4, params, 10000, c(0.17, 6, 0.02, 10, 0.12, 8), c(0.15, 0.45, 0, 0.18, 0.1, 0.33))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/arSE/trace.png", plot = trace_plot_4, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/arSE/hist.png", plot = hist_plot_4, width = 20, height = 8)
+
+```
+
+
+
+
+# Inference: Add / Remove EI events
+
+```{r Load the results _5}
+
+# Load in the inference
+res_5 = read.csv("Inference/Set 1/arEI/res.csv")
+other_res_5 = read.csv("Inference/Set 1/arEI/other_res.csv")
+aug_res_5 = read.csv("Inference/Set 1/arEI/aug_res.csv")
+
+```
+
+```{r Summarise the results _5}
+
+## Summarise the results
+
+summary(res_5[-(1:5000), 1:3])
+
+summary(other_res_5[-(1:5000), c(3,5,6)])
+
+summary(aug_res_5[-(1:5000), c(17,19,20)])
+
+```
+
+```{r Plot the results _5}
+
+## Plot the results
+
+trace_plot_5 = gg_trace_plot(res_5, params, 10000, c(40000, 0.14, 40000, 0.02, 40000, 0.09), c(0.12, 0.42, 0.01, 0.16, 0.08, 0.35))
+
+hist_plot_5 = gg_hist_plot(res_5, params, 10000, c(0.17, 6, 0.04, 16, 0.12, 7), c(0.14, 0.45, 0.03, 0.16, 0.08, 0.35))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/arEI/trace.png", plot = trace_plot_5, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/arEI/hist.png", plot = hist_plot_5, width = 20, height = 8)
+
+```
+
+
+
+
+
+# Inference: Move SE events and Move EI events
+
+```{r Load the results _6}
+
+# Load in the inference
+res_6 = read.csv("Inference/Set 1/mSEmEI/res.csv")
+other_res_6 = read.csv("Inference/Set 1/mSEmEI/other_res.csv")
+aug_res_6 = read.csv("Inference/Set 1/mSEmEI/aug_res.csv")
+
+```
+
+```{r Summarise the results _6}
+
+## Summarise the results
+
+summary(res_6[-(1:5000), 1:3])
+
+summary(other_res_6[-(1:5000), c(3,5,6)])
+
+summary(aug_res_6[-(1:5000), c(1,3,4,5,7,8)])
+
+```
+
+```{r Plot the results _6}
+
+## Plot the results
+
+trace_plot_6 = gg_trace_plot(res_6, params, 10000, c(40000, 0.14, 40000, 0.015, 40000, 0.09), c(0.12, 0.45, 0, 0.16, 0.08, 0.4))
+
+hist_plot_6 = gg_hist_plot(res_6, params, 10000, c(0.17, 6, 0.01, 17, 0.12, 7), c(0.15, 0.45, 0, 0.15, 0.1, 0.4))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/mSEmEI/trace.png", plot = trace_plot_6, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/mSEmEI/hist.png", plot = hist_plot_6, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+# Inference: Add / Remove SE events and Add / Remove EI events
+
+```{r Load the results _7}
+
+# Load in the inference
+res_7 = read.csv("Inference/Set 1/arSEarEI/res.csv")
+other_res_7 = read.csv("Inference/Set 1/arSEarEI/other_res.csv")
+aug_res_7 = read.csv("Inference/Set 1/arSEarEI/aug_res.csv")
+
+```
+
+```{r Summarise the results _7}
+
+## Summarise the results
+
+summary(res_7[-(1:5000), 1:3])
+
+summary(other_res_7[-(1:5000), c(3,5,6)])
+
+summary(aug_res_7[-(1:5000), c(13,15,16,17,19,20)])
+
+```
+
+```{r Plot the results _7}
+
+## Plot the results
+
+trace_plot_7 = gg_trace_plot(res_7, params, 10000, c(40000, 0.14, 40000, 0.015, 40000, 0.09), c(0.12, 0.45, 0, 0.16, 0.08, 0.4))
+
+hist_plot_7 = gg_hist_plot(res_7, params, 10000, c(0.17, 6, 0.01, 12, 0.12, 7.5), c(0.15, 0.47, 0, 0.17, 0.1, 0.37))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/arSEarEI/trace.png", plot = trace_plot_7, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/arSEarEI/hist.png", plot = hist_plot_7, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+# Inference: Move SE events and Add / Remove SE events
+
+```{r Load the results _8}
+
+# Load in the inference
+res_8 = read.csv("Inference/Set 1/mSEarSE/res.csv")
+other_res_8 = read.csv("Inference/Set 1/mSEarSE/other_res.csv")
+aug_res_8 = read.csv("Inference/Set 1/mSEarSE/aug_res.csv")
+
+```
+
+```{r Summarise the results _8}
+
+## Summarise the results
+
+summary(res_8[-(1:5000), 1:3])
+
+summary(other_res_8[-(1:5000), c(3,5,6)])
+
+summary(aug_res_8[-(1:5000), c(1,3,4,13,15,16)])
+
+```
+
+```{r Plot the results _8}
+
+## Plot the results
+
+trace_plot_8 = gg_trace_plot(res_8, params, 10000, c(40000, 0.14, 40000, 0.015, 40000, 0.09), c(0.12, 0.45, 0, 0.16, 0.08, 0.35))
+
+hist_plot_8 = gg_hist_plot(res_8, params, 10000, c(0.17, 6, 0.01, 10, 0.12, 8), c(0.15, 0.45, 0, 0.17, 0.1, 0.33))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/mSEarSE/trace.png", plot = trace_plot_8, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/mSEarSE/hist.png", plot = hist_plot_8, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+# Inference: Move EI events and Add / Remove EI events
+
+```{r Load the results _9}
+
+# Load in the inference
+res_9 = read.csv("Inference/Set 1/mEIarEI/res.csv")
+other_res_9 = read.csv("Inference/Set 1/mEIarEI/other_res.csv")
+aug_res_9 = read.csv("Inference/Set 1/mEIarEI/aug_res.csv")
+
+```
+
+```{r Summarise the results _9}
+
+## Summarise the results
+
+summary(res_9[-(1:5000), 1:3])
+
+summary(other_res_9[-(1:5000), c(3,5,6)])
+
+summary(aug_res_9[-(1:5000), c(5,7,8,17,19,20)])
+
+```
+
+```{r Plot the results _9}
+
+## Plot the results
+
+trace_plot_9 = gg_trace_plot(res_9, params, 10000, c(40000, 0.14, 40000, 0.025, 40000, 0.09), c(0.12, 0.45, 0.01, 0.16, 0.08, 0.37))
+
+hist_plot_9 = gg_hist_plot(res_9, params, 10000, c(0.17, 6, 0.04, 17, 0.12, 7), c(0.15, 0.46, 0.03, 0.15, 0.1, 0.35))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/mEIarEI/trace.png", plot = trace_plot_9, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/mEIarEI/hist.png", plot = hist_plot_9, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+# Inference: All with strong priors
+
+```{r Load the results _10}
+
+# Load in the inference
+res_10 = read.csv("Inference/Set 1/mSEmEIarSEarEI/res.csv")
+other_res_10 = read.csv("Inference/Set 1/mSEmEIarSEarEI/other_res.csv")
+aug_res_10 = read.csv("Inference/Set 1/mSEmEIarSEarEI/aug_res.csv")
+
+```
+
+```{r Summarise the results _10}
+
+## Summarise the results
+
+summary(res_10[-(1:5000), 1:3])
+
+summary(other_res_10[-(1:5000), c(3,5,6)])
+
+summary(aug_res_10[-(1:5000), c(1,3,4,5,7,8,13,15,16,17,19,20)])
+
+```
+
+
+```{r}
+
+contour_plot_10 = gg_contour_plot(res_10, params, 5000, c(0.01, 0.01, 0.01, 0.01, 0.01, 0.01), c(0.2, 0.43, 0.2, 0.43, 0.02, 0.13), c(0.02, 0.13, 0.1, 0.31, 0.1, 0.31))
+
+ggsave(filename = "Visualisation/Set 1/mSEmEIarSEarEI/contour.png", plot = contour_plot_10, width = 8, height = 12)
+
+```
+
+
+```{r Plot the results _10}
+
+## Plot the results
+
+trace_plot_10 = gg_trace_plot(res_10, params, 10000, c(40000, 0.14, 40000, 0.015, 40000, 0.07), c(0.12, 0.5, 0, 0.2, 0.05, 0.4))
+
+hist_plot_10 = gg_hist_plot(res_10, params, 10000, c(0.17, 6, 0.01, 13, 0.12, 7), c(0.15, 0.5, 0, 0.2, 0.07, 0.4))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/mSEmEIarSEarEI/trace.png", plot = trace_plot_10, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/mSEmEIarSEarEI/hist.png", plot = hist_plot_10, width = 20, height = 8)
+
+```
+
+
+
+
+
+# Inference: All with weak priors
+
+```{r Load the results _11}
+
+# Load in the inference
+res_11 = read.csv("Inference/Set 1/allweakpriors/res.csv")
+other_res_11 = read.csv("Inference/Set 1/allweakpriors/other_res.csv")
+aug_res_11 = read.csv("Inference/Set 1/allweakpriors/aug_res.csv")
+
+```
+
+```{r Summarise the results _11}
+
+## Summarise the results
+
+summary(res_11[-(1:5000), 1:3])
+
+summary(other_res_11[-(1:5000), c(3,5,6)])
+
+summary(aug_res_11[-(1:5000), c(1,3,4,5,7,8,13,15,16,17,19,20)])
+
+```
+
+```{r}
+
+contour_plot_11 = gg_contour_plot(res_11, params, 5000, c(1000, 0.01, 1000, 0.01, 1000, 0.01), c(0, 1, 0, 0.43, 0, 0.25), c(0, 1, 0, 0.25, 0, 0.5))
+
+ggsave(filename = "Visualisation/Set 1/allweakpriors/contour.png", plot = contour_plot_11, width = 8, height = 12)
+
+```
+
+
+```{r Plot the results _11}
+
+## Plot the results
+
+trace_plot_11 = gg_trace_plot(res_11, params, 10000, c(60000, 1.08, 110000, 1.08, 80000, 0.6), c(0, 1.1, 0, 1.1, 0, 0.7))
+
+hist_plot_11 = gg_hist_plot(res_11, params, 10000, c(0.8, 1.5, 0.8, 4.5, 0.5, 2.5), c(0, 1.1, 0, 1.1, 0, 0.7))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/allweakpriors/trace.png", plot = trace_plot_11, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/allweakpriors/hist.png", plot = hist_plot_11, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Inference: Agg point2
+
+```{r Load the results _11}
+
+# Load in the inference
+res_11 = read.csv("Inference/Set 1/agg_point2/res.csv")
+other_res_11 = read.csv("Inference/Set 1/agg_30/other_res.csv")
+aug_res_11 = read.csv("Inference/Set 1/agg_30/aug_res.csv")
+
+```
+
+```{r Summarise the results _11}
+
+## Summarise the results
+
+summary(res_11[-(1:500000), 1:3])
+
+summary(other_res_11[-(1:500000), c(3,5,6)])
+
+summary(aug_res_11[-(1:500000), c(1,5,9,13)])
+
+effectiveSize(res_11[ , 1:3])
+
+```
+
+```{r}
+
+contour_plot_11 = gg_contour_plot(res_11, params, 1500000, c(0.06, 0.33), c(0.03, 0.2), c(0.05, 0.27))
+
+ggsave(filename = "Visualisation/Set 1/aggpoint2/contour.png", plot = contour_plot_11, width = 8, height = 12)
+
+```
+
+
+```{r Plot the results _11}
+
+## Plot the results
+
+trace_plot_11 = gg_trace_plot(res_11, params, 500000, c(60000, 100, 110000, 100, 80000, 100), c(0, 0.6, 0, 0.45, 0, 0.4))
+
+hist_plot_11 = gg_hist_plot(res_11, params, 500000, c(60000, 0.1, 110000, 0.1, 80000, 0.1), c(0, 0.5, 0, 0.3, 0, 0.4))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/aggpoint2/trace.png", plot = trace_plot_11, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/aggpoint2/hist.png", plot = hist_plot_11, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+# Inference: Agg 1
+
+```{r Load the results _11}
+
+# Load in the inference
+res_11 = read.csv("Inference/Set 1/agg_1/res.csv")
+other_res_11 = read.csv("Inference/Set 1/agg_1/other_res.csv")
+aug_res_11 = read.csv("Inference/Set 1/agg_1/aug_res.csv")
+
+```
+
+```{r Summarise the results _11}
+
+## Summarise the results
+
+summary(res_11[-(1:500000), 1:3])
+
+summary(other_res_11[-(1:500000), c(3,5,6)])
+
+summary(aug_res_11[-(1:500000), c(1,5,9,13)])
+
+effectiveSize(res_11[ , 1:3])
+
+```
+
+```{r}
+
+contour_plot_11 = gg_contour_plot(res_11, params, 1500000, c(0.06, 0.36), c(0.03, 0.25), c(0.05, 0.35))
+
+ggsave(filename = "Visualisation/Set 1/agg1/contour.png", plot = contour_plot_11, width = 8, height = 12)
+
+```
+
+
+```{r Plot the results _11}
+
+## Plot the results
+
+trace_plot_11 = gg_trace_plot(res_11, params, 500000, c(60000, 100, 110000, 100, 80000, 100), c(0, 0.6, 0, 0.4, 0, 0.5))
+
+hist_plot_11 = gg_hist_plot(res_11, params, 500000, c(60000, 0.1, 110000, 0.1, 80000, 0.1), c(0, 0.7, 0, 0.3, 0, 0.5))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/agg1/trace.png", plot = trace_plot_11, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/agg1/hist.png", plot = hist_plot_11, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+# Inference: Agg 7
+
+```{r Load the results _11}
+
+# Load in the inference
+res_11 = read.csv("Inference/Set 1/agg_7/res.csv")
+# other_res_11 = read.csv("Inference/Set 1/agg_7/other_res.csv")
+# aug_res_11 = read.csv("Inference/Set 1/agg_7/aug_res.csv")
+
+```
+
+```{r Summarise the results _11}
+
+## Summarise the results
+
+summary(res_11[-(1:2000000), 1:3])
+
+summary(other_res_11[-(1:2000000), c(3,5,6)])
+
+summary(aug_res_11[-(1:2000000), c(1,3,4,5,7,8,13,15,16,17,19,20)])
+
+```
+
+```{r}
+
+contour_plot_11 = gg_contour_plot(res_11, params, 1500000, c(0.06, 0.17), c(0.05, 0.35), c(0.05, 0.25))
+
+ggsave(filename = "Visualisation/Set 1/agg7/contour.png", plot = contour_plot_11, width = 8, height = 12)
+
+```
+
+
+```{r Plot the results _11}
+
+## Plot the results
+
+trace_plot_11 = gg_trace_plot(res_11, params, 500000, c(60000, 100, 110000, 100, 80000, 100), c(0, 0.6, 0, 0.45, 0, 0.5))
+
+hist_plot_11 = gg_hist_plot(res_11, params, 500000, c(60000, 0.1, 110000, 0.1, 80000, 0.1), c(0, 0.4, 0, 0.4, 0, 0.5))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/agg7/trace.png", plot = trace_plot_11, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/agg7/hist.png", plot = hist_plot_11, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+
+
+
+
+# Inference: Agg 30
+
+```{r Load the results _11}
+
+# Load in the inference
+res_11 = read.csv("Inference/Set 1/agg_30/res.csv")
+other_res_11 = read.csv("Inference/Set 1/agg_30/other_res.csv")
+aug_res_11 = read.csv("Inference/Set 1/agg_30/aug_res.csv")
+
+```
+
+```{r Summarise the results _11}
+
+## Summarise the results
+
+summary(res_11[-(1:500000), 1:3])
+
+summary(other_res_11[-(1:500000), c(3,5,6)])
+
+summary(aug_res_11[-(1:500000), c(1,5,9,13)])
+
+effectiveSize(res_11[ , 1:3])
+
+
+```
+
+```{r}
+
+contour_plot_11 = gg_contour_plot(res_11, params, 1500000, c(0.5, 1.1), c(0.0015, 0.0023), c(0, 0.5))
+
+ggsave(filename = "Visualisation/Set 1/agg30/contour.png", plot = contour_plot_11, width = 8, height = 12)
+
+```
+
+
+```{r Plot the results _11}
+
+## Plot the results
+
+trace_plot_11 = gg_trace_plot(res_11, params, 500000, c(60000, 100, 110000, 100, 80000, 100), c(0, 1.3, 0.001, 0.003, 0, 1.0))
+
+hist_plot_11 = gg_hist_plot(res_11, params, 500000, c(60000, 0.1, 110000, 0.1, 80000, 0.1), c(0, 1.3, 0.001, 0.003, 0, 0.7))
+
+## Save the results
+
+ggsave(filename = "Visualisation/Set 1/agg30/trace.png", plot = trace_plot_11, width = 10, height = 8)
+
+ggsave(filename = "Visualisation/Set 1/agg30/hist.png", plot = hist_plot_11, width = 20, height = 8)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+# Curves
+
+
+
+
+
+```{r}
+
+init_point2 <- data.frame(S = 999, E = 0, I = 1, R = 0)
+
+epi_df_point2 = read.csv("Data/full_agg_point2.csv", header = FALSE)
+
+# Assign new column names
+colnames(init_point2) <- c("Susceptible", "Exposed", "Infected", "Recovered")
+colnames(epi_df_point2) <- c("Susceptible", "Exposed", "Infected", "Recovered")
+
+combined_df_point2 <- rbind(init_point2, epi_df_point2)
+
+# Define the timestep size
+delta <- 0.2
+
+# Create the time column
+combined_df_point2$time <- seq(0, length.out = nrow(combined_df_point2)) * delta
+
+# Plotting
+plot_agg_point2 = ggplot(combined_df_point2, aes(x = time)) +
+  geom_step(aes(y = Susceptible, color = "S"), size = 0.5) +
+  geom_step(aes(y = Exposed, color = "E"), size = 0.5) +
+  geom_step(aes(y = Infected, color = "I"), size = 0.5) +
+  geom_step(aes(y = Recovered, color = "R"), size = 0.5) +
+  ggtitle(expression("Discrete:" ~ Delta * t == 0.2)) +
+  labs(x = "Time",
+       y = "Population",
+       color = "State") +
+  scale_color_manual(values = c("S" = "green",
+                                "E" = "orange",
+                                "I" = "red",
+                                "R" = "blue")) +
+  scale_y_continuous(limits = c(0, 1000)) + 
+  theme_minimal()
+
+
+ggsave(filename = "Visualisation/curves_agg_point2.png", plot = plot_agg_point2, width = 10, height = 8)
+
+```
+
+
+
+
+
+
+
+
+```{r}
+
+init_1 <- data.frame(S = 999, E = 0, I = 1, R = 0)
+
+epi_df_1 = read.csv("Data/full_agg_1.csv", header = FALSE)
+
+# Assign new column names
+colnames(init_1) <- c("Susceptible", "Exposed", "Infected", "Recovered")
+colnames(epi_df_1) <- c("Susceptible", "Exposed", "Infected", "Recovered")
+
+combined_df_1 <- rbind(init_1, epi_df_1)
+
+# Define the timestep size
+delta <- 1
+
+# Create the time column
+combined_df_1$time <- seq(0, length.out = nrow(combined_df_1)) * delta
+
+# Plotting
+plot_agg_1 = ggplot(combined_df_1, aes(x = time)) +
+  geom_step(aes(y = Susceptible, color = "S"), size = 0.5) +
+  geom_step(aes(y = Exposed, color = "E"), size = 0.5) +
+  geom_step(aes(y = Infected, color = "I"), size = 0.5) +
+  geom_step(aes(y = Recovered, color = "R"), size = 0.5) +
+  ggtitle(expression("Discrete:" ~ Delta * t == 1)) +
+  labs(x = "Time",
+       y = "Population",
+       color = "State") +
+  scale_color_manual(values = c("S" = "green",
+                                "E" = "orange",
+                                "I" = "red",
+                                "R" = "blue")) +
+  scale_y_continuous(limits = c(0, 1000)) + 
+  theme_minimal()
+
+
+ggsave(filename = "Visualisation/curves_agg_1.png", plot = plot_agg_1, width = 10, height = 8)
+
+```
+
+
+
+
+
+```{r}
+
+init_7 <- data.frame(S = 999, E = 0, I = 1, R = 0)
+
+epi_df_7 = read.csv("Data/full_agg_7.csv", header = FALSE)
+
+# Assign new column names
+colnames(init_7) <- c("Susceptible", "Exposed", "Infected", "Recovered")
+colnames(epi_df_7) <- c("Susceptible", "Exposed", "Infected", "Recovered")
+
+combined_df_7 <- rbind(init_7, epi_df_7)
+
+# Define the timestep size
+delta <- 7
+
+# Create the time column
+combined_df_7$time <- seq(0, length.out = nrow(combined_df_7)) * delta
+
+# Plotting
+plot_agg_7 = ggplot(combined_df_7, aes(x = time)) +
+  geom_step(aes(y = Susceptible, color = "S"), size = 0.5) +
+  geom_step(aes(y = Exposed, color = "E"), size = 0.5) +
+  geom_step(aes(y = Infected, color = "I"), size = 0.5) +
+  geom_step(aes(y = Recovered, color = "R"), size = 0.5) +
+  ggtitle(expression("Discrete:" ~ Delta * t == 7)) +
+  labs(x = "Time",
+       y = "Population",
+       color = "State") +
+  scale_color_manual(values = c("S" = "green",
+                                "E" = "orange",
+                                "I" = "red",
+                                "R" = "blue")) +
+  scale_y_continuous(limits = c(0, 1000)) + 
+  theme_minimal()
+
+
+ggsave(filename = "Visualisation/curves_agg_7.png", plot = plot_agg_7, width = 10, height = 8)
+
+```
+
+
+
+
+
+
+```{r}
+
+init_30 <- data.frame(S = 999, E = 0, I = 1, R = 0)
+
+epi_df_30 = read.csv("Data/full_agg_30.csv", header = FALSE)
+
+# Assign new column names
+colnames(init_30) <- c("Susceptible", "Exposed", "Infected", "Recovered")
+colnames(epi_df_30) <- c("Susceptible", "Exposed", "Infected", "Recovered")
+
+combined_df_30 <- rbind(init_30, epi_df_30)
+
+# Define the timestep size
+delta <- 30
+
+# Create the time column
+combined_df_30$time <- seq(0, length.out = nrow(combined_df_30)) * delta
+
+# Plotting
+plot_agg_30 = ggplot(combined_df_30, aes(x = time)) +
+  geom_step(aes(y = Susceptible, color = "S"), size = 0.5) +
+  geom_step(aes(y = Exposed, color = "E"), size = 0.5) +
+  geom_step(aes(y = Infected, color = "I"), size = 0.5) +
+  geom_step(aes(y = Recovered, color = "R"), size = 0.5) +
+  ggtitle(expression("Discrete:" ~ Delta * t == 30)) +
+  labs(x = "Time",
+       y = "Population",
+       color = "State") +
+  scale_color_manual(values = c("S" = "green",
+                                "E" = "orange",
+                                "I" = "red",
+                                "R" = "blue")) +
+  scale_y_continuous(limits = c(0, 1000)) + 
+  theme_minimal()
+
+
+ggsave(filename = "Visualisation/curves_agg_30.png", plot = plot_agg_30, width = 10, height = 8)
+
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+
