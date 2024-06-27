@@ -151,6 +151,100 @@ gg_hist_plot <- function(results, params_true, burn_in, annotate_xy, x_limits){
 
 
 
+gg_hist_plot_w_prior <- function(results, params_true, burn_in, annotate_xy, x_limits, priorhp){
+  
+  df = data.frame(samples = results[, 4], b = results[, 1], g = results[, 2], d = results[, 3])
+  
+  num_samples = nrow(df)
+  
+  df_burn_in <- df %>% 
+    mutate(burnin = c(rep("yes", burn_in), rep("no", (num_samples - burn_in))))
+  
+  
+  
+  
+  
+  beta_plot = df_burn_in %>% 
+    ggplot(aes(x = b, y = ..density..)) +
+    geom_histogram(fill = "#f5c04a", colour = "grey15", alpha = 0.85) +
+    geom_vline(aes(xintercept = params_true[1]), size = 1.1, linetype = 2, 
+               colour = '#4f5157') +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 5), 
+                       limits = c(x_limits[1], x_limits[2])) +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 7)
+    ) +
+    annotate("text", y = annotate_xy[2], x = annotate_xy[1], ##### HERE IS CHANGE VALUE
+             parse = TRUE, size = 5,
+             label = as.expression(bquote(beta~"="~.(params_true[[1]])))) + ##### HERE IS CHANGE SYMBOL AND VALUE
+    labs(
+      x = expression("Samples of parameter" ~ beta), ##### HERE IS CHANGE SYMBOL
+      y = "Density")   +
+    stat_function(aes(y = NULL), 
+                  fun=dgamma, 
+                  args=list(shape=priorhp[1], rate=priorhp[2]),
+                  colour = "lightblue", geom="area", fill="lightblue", alpha=0.2)
+  
+  
+  
+  
+  
+  
+  g_plot = df_burn_in %>% 
+    ggplot(aes(x = g, y = ..density..)) +
+    geom_histogram(fill = "#f5c04a", colour = "grey15", alpha = 0.85) +
+    geom_vline(aes(xintercept = params_true[2]), size = 1.1, linetype = 2, 
+               colour = '#4f5157') +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 5), 
+                       limits = c(x_limits[3], x_limits[4])) +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 7)
+    ) +
+    annotate("text", y = annotate_xy[4], x = annotate_xy[3], ##### HERE IS CHANGE VALUE
+             parse = TRUE, size = 5,
+             label = as.expression(bquote(delta~"="~.(params_true[[2]])))) + ##### HERE IS CHANGE SYMBOL AND VALUE
+    labs(
+      x = expression("Samples of parameter" ~ delta), ##### HERE IS CHANGE SYMBOL
+      y = "Density")   +
+    stat_function(aes(y = NULL), 
+                  fun=dgamma, 
+                  args=list(shape=priorhp[3], rate=priorhp[4]),
+                  colour = "lightblue", geom="area", fill="lightblue", alpha=0.2)
+  
+  
+  
+  
+  
+  
+  
+  d_plot = df_burn_in %>% 
+    ggplot(aes(x = d, y = ..density..)) +
+    geom_histogram(fill = "#f5c04a", colour = "grey15", alpha = 0.85) +
+    geom_vline(aes(xintercept = params_true[3]), size = 1.1, linetype = 2, 
+               colour = '#4f5157') +
+    scale_x_continuous(breaks = scales::pretty_breaks(n = 5), 
+                       limits = c(x_limits[5], x_limits[6])) +
+    scale_y_continuous(breaks = scales::pretty_breaks(n = 7)
+    ) +
+    annotate("text", y = annotate_xy[6], x = annotate_xy[5], ##### HERE IS CHANGE VALUE
+             parse = TRUE, size = 5,
+             label = as.expression(bquote(gamma~"="~.(params_true[[3]])))) + ##### HERE IS CHANGE SYMBOL AND VALUE
+    labs(
+      x = expression("Samples of parameter" ~ gamma), ##### HERE IS CHANGE SYMBOL
+      y = "Density")   +
+    stat_function(aes(y = NULL), 
+                  fun=dgamma, 
+                  args=list(shape=priorhp[5], rate=priorhp[6]),
+                  colour = "lightblue", geom="area", fill="lightblue", alpha=0.2)
+  
+  
+  hist_plots = grid.arrange(beta_plot, g_plot, d_plot, nrow = 1)
+  
+  return(hist_plots)
+}
+
+
+
+
+
 
 
 gg_contour_plot <- function(results, params_true, burn_in, b_limits, g_limits, d_limits){
